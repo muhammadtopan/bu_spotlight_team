@@ -1,0 +1,89 @@
+<template>
+<div class="page-content-wrapper">
+    <div class="pt-3"></div>
+    <div class="container">
+        <!-- Element Heading -->
+        <div class="element-heading">
+            <h6>Stok Awal</h6>
+        </div>
+    </div>
+    <div class="container">
+        <div class="card">
+            <div class="card-body table-responsive">
+                <table class="table w-100" id="dataTableStock">
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>Produk</th>
+                            <th>Harga</th>
+                            <th>Stok</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="(d,i) in dataDesc" v-if="">
+                            <td>{{ ++i }}</td>
+                            <td>{{ d.product.name }}</td>
+                            <td>{{ formatRp(d.price) }}</td>
+                            <td>{{ d.stock }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div class="pb-3"></div>
+</div>
+</template>
+<script>
+import Loader from '../../../components/Loader';
+import Toast from '../../../components/Toast';
+var _ = require('lodash');
+export default {
+    layout: 'layoutMitra',
+    components: {
+        Toast,
+        Loader
+    },
+    data() {
+        return {
+            isLoading: true,
+            data : [],
+        }
+    },
+    async mounted() {
+        this.isLoading = true
+        await this.loadData();
+    },
+    methods: {
+        formatRp(angka, prefix = 'Rp ') {
+            var number_string = parseInt(angka).toString().replace(/[^,\d]/g, ""),
+                split = number_string.split(","),
+                sisa = split[0].length % 3,
+                rupiah = split[0].substr(0, sisa),
+                ribuan = split[0].substr(sisa).match(/\d{3}/gi);
+
+            // tambahkan titik jika yang di input sudah menjadi angka ribuan
+            if (ribuan) {
+                let separator = sisa ? "." : "";
+                rupiah += separator + ribuan.join(".");
+            }
+
+            rupiah = split[1] != undefined ? rupiah + "," + split[1] : rupiah;
+            return prefix == undefined ? rupiah : rupiah ? "Rp " + rupiah : "";
+        },
+        async loadData(){
+            const data = await this.$axios.$get('/mitra/stock/first-month/fetch')
+            if(data.status == 'success'){
+                this.data = data.data
+                this.isLoading = false
+                console.log(this.data);
+            }
+        }
+    },
+    computed: {
+        dataDesc() {
+            return _.orderBy(this.data, 'id', 'desc');
+        },
+    }
+}
+</script>
